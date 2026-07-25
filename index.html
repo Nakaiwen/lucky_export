@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>每月吉時表導出系統</title>
+    <style>
+        body {
+            font-family: '微軟正黑體', 'PingFang TC', sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .export-card {
+            background: white;
+            padding: 40px 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+            text-align: center;
+            width: 90%;
+            max-width: 380px;
+            box-sizing: border-box;
+        }
+        .export-card h2 { color: #333; margin-top: 0; margin-bottom: 10px; font-size: 24px; }
+        .export-card p { color: #666; margin-bottom: 30px; font-size: 14px; line-height: 1.5; }
+        .input-group { display: flex; justify-content: center; gap: 15px; margin-bottom: 30px; }
+        .select-wrapper { display: flex; flex-direction: column; text-align: left; width: 100%; }
+        .select-wrapper label { font-size: 13px; color: #888; margin-bottom: 6px; font-weight: bold; }
+        select { padding: 10px; font-size: 16px; border-radius: 6px; border: 1px solid #ccc; background-color: #fff; cursor: pointer; }
+
+        /* 🌟 統一按鈕樣式：採用橘金色漸層設定 */
+        #btn-view-lucky-time {
+            background: linear-gradient(135deg, #da7800, #ff9800);
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 25px; /* 圓角設計 */
+            width: 100%;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(218, 120, 0, 0.3);
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            outline: none;
+            margin-top: 10px;
+        }
+
+        #btn-view-lucky-time:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(218, 120, 0, 0.4);
+            filter: brightness(1.1);
+        }
+
+        #btn-view-lucky-time:active { transform: scale(0.98); }
+
+        .hidden-engine { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div class="export-card">
+        <h2>🗓️ 每月吉時表導出系統</h2>
+        <p>
+            選擇年月後，系統將自動演算每日吉時。<br>
+            <small>（小六太乙提供）</small>
+        </p>
+        
+        <div class="input-group">
+            <div class="select-wrapper">
+                <label>選擇年份</label>
+                <select id="export-year"></select>
+            </div>
+            <div class="select-wrapper">
+                <label>選擇月份</label>
+                <select id="export-month"></select>
+            </div>
+        </div>
+
+        <span style="display: block; font-size: 13px; color: #888; margin-bottom: 15px;">
+            本系統的吉時以台灣時間 (GMT+8) 為基準
+        </span>
+
+        <button id="btn-view-lucky-time">🚀 產出完整吉時表</button>
+        <button id="btn-view-simple-time" style="background: linear-gradient(135deg, #5a8f3c, #7cb342); color: white; border: none; padding: 14px 20px; font-size: 16px; font-weight: bold; border-radius: 25px; width: 100%; cursor: pointer; box-shadow: 0 4px 15px rgba(90,143,60,0.3); margin-top: 12px; outline: none;">🌿 產出週末簡易表（預覽用）</button>
+        <button id="btn-copy-blog-html" style="background: linear-gradient(135deg, #8a5a2b, #b5651d); color: white; border: none; padding: 14px 20px; font-size: 16px; font-weight: bold; border-radius: 25px; width: 100%; cursor: pointer; box-shadow: 0 4px 15px rgba(138,90,43,0.3); margin-top: 12px; outline: none;">📋 複製 blog 用 HTML（貼進 WordPress）</button>
+        
+        <div style="margin-top: 25px; font-size: 13px; color: #da7800; font-style: italic; line-height: 1.6; font-weight: bold;">
+            天道無親，吉凶皆為能量之波動。<br>
+            心存善念，日日皆是好日。
+        </div>
+    </div>
+
+    <div class="hidden-engine">
+        <select id="birth-year"></select><select id="birth-month"></select>
+        <select id="birth-day"></select><select id="birth-hour"></select>
+        <select id="timezone-select"></select>
+        <input type="radio" id="chart-type-year" name="chart-type">
+        <input type="radio" id="chart-type-month" name="chart-type">
+        <input type="radio" id="chart-type-day" name="chart-type">
+        <input type="radio" id="chart-type-hour" name="chart-type" checked>
+        
+        <button id="switch-to-personal-btn"></button>
+        <button id="save-pdf-btn"></button>
+        <button id="lucky-table-btn"></button>
+        <button id="calculate-btn"></button>
+        
+        <span id="annual-jishu-display"></span><span id="monthly-jishu-display"></span>
+        <span id="day-jishu-display"></span><span id="hour-jishu-display"></span>
+        
+        <div id="hour-pillar-stem"></div><div id="hour-pillar-branch"></div>
+        <div id="day-pillar-stem"></div><div id="day-pillar-branch"></div>
+        <div id="month-pillar-stem"></div><div id="month-pillar-branch"></div>
+        <div id="year-pillar-stem"></div><div id="year-pillar-branch"></div>
+        
+        <p id="calculation-summary"></p>
+        <div id="action-buttons-container"></div>
+        <svg id="taiyi-plate"></svg>
+    </div>
+
+    <script src="lib/solar-lunar.js"></script>
+    <script src="tn_script.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const yearSelect = document.getElementById('export-year');
+            const monthSelect = document.getElementById('export-month');
+            // 🌟 JavaScript 監聽的 ID 同步更新
+            const exportBtn = document.getElementById('btn-view-lucky-time');
+
+            // 初始化選單
+            const currentYear = new Date().getFullYear();
+            for (let i = 1930; i <= 2050; i++) {
+                let opt = new Option(i + ' 年', i);
+                if (i === currentYear) opt.selected = true;
+                yearSelect.add(opt);
+            }
+            for (let i = 1; i <= 12; i++) {
+                let opt = new Option(i + ' 月', i);
+                if (i === (new Date().getMonth() + 1)) opt.selected = true;
+                monthSelect.add(opt);
+            }
+
+            exportBtn.addEventListener('click', () => {
+                const y = parseInt(yearSelect.value, 10);
+                const m = parseInt(monthSelect.value, 10);
+
+                if (typeof window.generateAndPrintLuckyTable === 'function') {
+                    try {
+                        window.generateAndPrintLuckyTable(y, m);
+                    } catch (err) {
+                        alert("執行出錯：" + err.message);
+                    }
+                } else {
+                    alert("⚠️ 引擎尚未就緒，請重新整理網頁。");
+                }
+            });
+
+            // 🌿 簡易版（週末）按鈕
+            const simpleBtn = document.getElementById('btn-view-simple-time');
+            simpleBtn.addEventListener('click', () => {
+                const y = parseInt(yearSelect.value, 10);
+                const m = parseInt(monthSelect.value, 10);
+
+                if (typeof window.generateSimpleWeekendLuckyTable === 'function') {
+                    try {
+                        window.generateSimpleWeekendLuckyTable(y, m);
+                    } catch (err) {
+                        alert("執行出錯：" + err.message);
+                    }
+                } else {
+                    alert("⚠️ 引擎尚未就緒，請重新整理網頁。");
+                }
+            });
+
+            // 📋 複製 blog 用 HTML 按鈕
+            const copyBtn = document.getElementById('btn-copy-blog-html');
+            copyBtn.addEventListener('click', () => {
+                const y = parseInt(yearSelect.value, 10);
+                const m = parseInt(monthSelect.value, 10);
+
+                if (typeof window.copyBlogHTML === 'function') {
+                    try {
+                        window.copyBlogHTML(y, m);
+                    } catch (err) {
+                        alert("執行出錯：" + err.message);
+                    }
+                } else {
+                    alert("⚠️ 引擎尚未就緒，請重新整理網頁。");
+                }
+            });
+        });
+    </script>
+</body>
+</html>
